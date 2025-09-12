@@ -1,0 +1,218 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  inactive
+  banned
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model users {
+  id                String          @id @default(cuid())
+  role              Role
+  full_name         String
+  email             String          @unique
+  username          String          @unique
+  password_hash     String
+  phone             String?
+  profile_image_url String?
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+  status            UserStatus?     @default(active)
+
+  announcements     announcements[] @relation("announcements_posted")
+  blog_posts        blog_posts[]
+  messages_received messages[]      @relation("messages_received")
+  messages_sent     messages[]      @relation("messages_sent")
+  notifications      notifications[]
+  student           students?
+  teacher           teachers?
+}
+
+model teachers {
+  id               String           @id @default(cuid())
+  user_id          String           @unique
+  experience_years Int?
+  subjects_taught  String?
+  bio              String?
+  assignments      assignments[]
+  homework         homework[]
+  live_classes     live_classes[]
+  user             users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  teacher_courses  teacher_courses[] @relation("TeacherToCourses")
+}
+
+model teacher_courses {
+  id         String   @id @default(cuid())
+  teacher_id String
+  course_id  String
+  teacher    teachers @relation(fields: [teacher_id], references: [id], name: "TeacherToCourses", onDelete: Cascade)
+  course     courses  @relation(fields: [course_id], references: [id], name: "CourseToTeachers", onDelete: Cascade)
+
+  @@unique([teacher_id, course_id])
+}
+
+model student_courses {
+  id         String   @id @default(cuid())
+  student_id String
+  course_id  String
+  student    students @relation(fields: [student_id], references: [id], name: "StudentToCourse", onDelete: Cascade)
+  course     courses  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, course_id])
+}
+
+model students {
+  id                  String                @id @default(cuid())
+  user_id             String                @unique
+  grade_level         String?
+  enrollment_date     DateTime              @default(now())
+  progress_score      Int                   @default(0)
+  certificates        certificates[]
+  student_assignments student_assignments[]
+  user                users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  student_courses     student_courses[]     @relation("StudentToCourse") // fix
+}
+
+model assignments {
+  id          String                @id @default(cuid())
+  title       String
+  description String?
+  file_url    String?
+  teacher_id  String
+  course_id   String?
+  created_at  DateTime              @default(now())
+  due_date    DateTime?
+  teacher     teachers              @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  course      courses?              @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  submissions student_assignments[] @relation("AssignmentToSubmission") // fix
+}
+
+model student_assignments {
+  id                 String      @id @default(cuid())
+  assignment_id      String
+  student_id         String
+  submitted_file_url String?
+  description        String?
+  grade              String?
+  feedback           String?
+  submitted_at       DateTime?
+  assignment         assignments @relation(fields: [assignment_id], references: [id], name: "AssignmentToSubmission", onDelete: Cascade)
+  student            students    @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([assignment_id, student_id])
+}
+
+model courses {
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  created_at      DateTime         @default(now())
+  teacher_courses teacher_courses[] @relation("CourseToTeachers")
+  student_courses student_courses[]
+  live_classes    live_classes[]
+
+  //new
+  assignments     assignments[]
+  certificates    certificates[]
+}
+
+model homework {
+  id         String   @id @default(cuid())
+  title      String
+  content    String?
+  file_url   String?
+  teacher_id String
+  created_at DateTime @default(now())
+  teacher    teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+}
+
+model live_classes {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  start_time  DateTime
+  end_time    DateTime?
+  video_url   String?
+  teacher_id  String
+  course_id   String
+  teacher     teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  course      courses   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model certificates {
+  id          String   @id @default(cuid())
+  student_id  String
+  course_id   String?
+  course_name String
+  issued_date DateTime @default(now())
+  file_url    String?
+  student     students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  course      courses? @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model blog_posts {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  content         String
+  cover_image_url String?
+  author_id       String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  author          users    @relation(fields: [author_id], references: [id], onDelete: Cascade)
+}
+
+model messages {
+  id          String   @id @default(cuid())
+  sender_id   String
+  receiver_id String
+  content     String
+  sent_at     DateTime @default(now())
+  read_status Boolean  @default(false)
+  receiver    users    @relation("messages_received", fields: [receiver_id], references: [id], onDelete: Cascade)
+  sender      users    @relation("messages_sent", fields: [sender_id], references: [id], onDelete: Cascade)
+}
+
+model announcements {
+  id         String   @id @default(cuid())
+  title      String
+  message    String
+  posted_by  String
+  created_at DateTime @default(now())
+  postedBy   users    @relation("announcements_posted", fields: [posted_by], references: [id], onDelete: Cascade)
+}
+model settings {
+  id                String   @id @default(cuid())
+  theme             String   @default("light") // "light" or "dark"
+  primary_color     String?  // optional
+  maintenance_mode  Boolean  @default(false)
+  auto_backup       String?  // e.g., "daily", "weekly", "monthly"
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+}
+
+
+model notifications {
+  id        String   @id @default(cuid())
+  user_id   String   // admin user who will see this notification
+  type      String   // "new_user", "new_course", etc.
+  message   String
+  is_read   Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
