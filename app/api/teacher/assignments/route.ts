@@ -1,5 +1,5 @@
 
-// app
+// app/api/teacher/assignments/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
@@ -133,7 +133,19 @@ export async function POST(req: Request) {
         data: createManyPayload,
         skipDuplicates: true,
       });
+      const students = await prisma.students.findMany({
+        where: { id: { in: studentIds } },
+        select: { user_id: true },
+      });
+
+      const notifPayload = students.map((s) => ({
+        user_id: s.user_id,
+        type: "new_assignment",
+        message: `A new assignment "${assignment.title}" has been posted for your course.`,
+      }));
+      await prisma.notifications.createMany({ data: notifPayload });
     }
+
 
     return NextResponse.json({ id: assignment.id });
   } catch (err) {

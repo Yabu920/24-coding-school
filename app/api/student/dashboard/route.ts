@@ -1,3 +1,4 @@
+// app/api/student/dashboard/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -47,11 +48,29 @@ export async function GET() {
       : null
 
     // 6️⃣ Assignment Status Pie chart
-    const assignmentStatus = [
-      { name: "Submitted", value: student.student_assignments.filter((sa) => sa.submitted_at).length },
-      { name: "Pending", value: student.student_assignments.filter((sa) => !sa.submitted_at && new Date(sa.assignment?.due_date) >= now).length },
-      { name: "Overdue", value: student.student_assignments.filter((sa) => !sa.submitted_at && new Date(sa.assignment?.due_date) < now).length },
-    ]
+    // 6️⃣ Assignment Status Pie chart
+const assignmentStatus = [
+  { name: "Submitted", value: student.student_assignments.filter((sa) => sa.submitted_at).length },
+  {
+    name: "Pending",
+    value: student.student_assignments.filter(
+      (sa) =>
+        !sa.submitted_at &&
+        sa.assignment?.due_date &&
+        new Date(sa.assignment.due_date).getTime() >= now.getTime()
+    ).length,
+  },
+  {
+    name: "Overdue",
+    value: student.student_assignments.filter(
+      (sa) =>
+        !sa.submitted_at &&
+        sa.assignment?.due_date &&
+        new Date(sa.assignment.due_date).getTime() < now.getTime()
+    ).length,
+  },
+]
+
 
     // 7️⃣ Grades per course (Bar chart)
     const gradeDataMap: Record<string, { course: string; total: number; count: number }> = {}
