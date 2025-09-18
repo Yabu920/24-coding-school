@@ -19,6 +19,7 @@ export default function StudentDashboardPage() {
   const [assignmentStatus, setAssignmentStatus] = useState<AssignmentStatus[]>([])
   const [gradeData, setGradeData] = useState<GradeData[]>([])
 
+
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetch("/api/student/dashboard")
@@ -92,3 +93,6 @@ export default function StudentDashboardPage() {
     </div>
   )
 }
+
+
+

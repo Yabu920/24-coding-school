@@ -15,8 +15,16 @@ export async function GET() {
     const notifications = await prisma.notifications.findMany({
       where: { user_id: session.user.id },
       orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        type: true,
+        message: true,
+        is_read: true,
+        created_at: true,
+      },
+      
     });
-
+     console.log("🔎 Fetching notifications for user:", session.user.id, notifications);
     return NextResponse.json({ notifications });
   } catch (err) {
     console.error("❌ Failed to fetch notifications:", err);

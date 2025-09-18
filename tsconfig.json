@@ -24,6 +24,6 @@
     },
     "typeRoots": ["./types", "./node_modules/@types"]  // add
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts","types/**/*.d.ts","lib/**/*.ts"], // modify last word
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts","types/**/*.d.ts","lib/**/*.ts", "test-email.js"], // modify last word
   "exclude": ["node_modules"]
 }
