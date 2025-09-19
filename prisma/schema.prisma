@@ -41,6 +41,7 @@ model users {
   student           students?
   teacher           teachers?
   password_resets   password_resets[]
+  
 }
 
 model teachers {

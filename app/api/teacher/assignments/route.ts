@@ -1,4 +1,3 @@
-
 // // app/api/teacher/assignments/route.ts
 // import { NextResponse } from "next/server";
 // import { getServerSession } from "next-auth/next";
@@ -182,7 +181,6 @@
 //   // -------------------------------------------------
 // }
 
-
 //     return NextResponse.json({ id: assignment.id });
 //   } catch (err) {
 //     console.error("Error creating assignment:", err);
@@ -190,9 +188,6 @@
 //   }
 // }
 // // // app/api/teacher/assignments/route.ts
-
-
-
 
 // app/api/teacher/assignments/route.ts
 // app/api/teacher/assignments/route.ts
@@ -207,8 +202,11 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const teacher = await prisma.teachers.findUnique({ where: { user_id: session.user.id } });
-  if (!teacher) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const teacher = await prisma.teachers.findUnique({
+    where: { user_id: session.user.id },
+  });
+  if (!teacher)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const assignments = await prisma.assignments.findMany({
     where: { teacher_id: teacher.id },
@@ -250,8 +248,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const teacher = await prisma.teachers.findUnique({ where: { user_id: session.user.id } });
-  if (!teacher) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const teacher = await prisma.teachers.findUnique({
+    where: { user_id: session.user.id },
+  });
+  if (!teacher)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Parse body safely
   let body: any = null;
@@ -262,34 +263,51 @@ export async function POST(req: Request) {
       const txt = await req.text();
       body = txt ? JSON.parse(txt) : null;
     } catch (err2: unknown) {
-      console.error("Failed to parse body:", err2 instanceof Error ? err2.message : err2);
+      console.error(
+        "Failed to parse body:",
+        err2 instanceof Error ? err2.message : err2
+      );
       return NextResponse.json(
-        { error: "Invalid body", details: err2 instanceof Error ? err2.message : String(err2) },
+        {
+          error: "Invalid body",
+          details: err2 instanceof Error ? err2.message : String(err2),
+        },
         { status: 400 }
       );
     }
   }
 
-  if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  if (!body)
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
   let { title, description, due_date, studentIds, courseId } = body;
 
   // Normalize studentIds to array
   if (typeof studentIds === "string") {
-  try {
-    const parsed = JSON.parse(studentIds);
-    studentIds = Array.isArray(parsed)
-      ? parsed
-      : studentIds.split(",").map((s: string) => s.trim()).filter(Boolean);
-  } catch (err: unknown) {
-    studentIds = studentIds.split(",").map((s: string) => s.trim()).filter(Boolean);
+    try {
+      const parsed = JSON.parse(studentIds);
+      studentIds = Array.isArray(parsed)
+        ? parsed
+        : studentIds
+            .split(",")
+            .map((s: string) => s.trim())
+            .filter(Boolean);
+    } catch (err: unknown) {
+      studentIds = studentIds
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
   }
-}
 
-  if (!Array.isArray(studentIds)) studentIds = body.students ?? body.student_ids ?? [];
+  if (!Array.isArray(studentIds))
+    studentIds = body.students ?? body.student_ids ?? [];
 
   if (!title || studentIds.length === 0) {
-    return NextResponse.json({ error: "Title and at least one student required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Title and at least one student required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -321,27 +339,33 @@ export async function POST(req: Request) {
       select: { id: true, user_id: true },
     });
 
-    if (!students.length) {
+    if (!students) {
       students = await prisma.students.findMany({
         where: { user_id: { in: studentIds } },
         select: { id: true, user_id: true },
       });
     }
+    console.log("🔎 Resolved students for notifications:", students);
+    const notifPayload: { user_id: string; type: string; message: string }[] =
+      students
+        .map((s: { user_id: string | null }) => {
+          if (!s.user_id) return null;
+          return {
+            user_id: s.user_id,
+            type: "new_assignment",
+            message: `A new assignment "${assignment.title}" has been posted for your course.`,
+          };
+        })
+        .filter(
+          (s): s is { user_id: string; type: string; message: string } =>
+            s !== null
+        );
 
-    const notifPayload: { user_id: string; type: string; message: string }[] = students
-  .map((s: { user_id: string | null }) => {
-    if (!s.user_id) return null;
-    return {
-      user_id: s.user_id,
-      type: "new_assignment",
-      message: `A new assignment "${assignment.title}" has been posted for your course.`,
-    };
-  })
-  .filter((s): s is { user_id: string; type: string; message: string } => s !== null);
-
-
+    console.log("🔔 Notification payload:", notifPayload);
     if (notifPayload.length) {
-      const result = await prisma.notifications.createMany({ data: notifPayload });
+      const result = await prisma.notifications.createMany({
+        data: notifPayload,
+      });
       console.log(
         "🔔 Notifications created for assignment",
         assignment.id,
@@ -351,7 +375,12 @@ export async function POST(req: Request) {
         result
       );
     } else {
-      console.log("🔔 No notifications created. studentIds:", studentIds, "studentsResolved:", students);
+      console.log(
+        "🔔 No notifications created. studentIds:",
+        studentIds,
+        "studentsResolved:",
+        students
+      );
     }
     // ----------------------------------
 
@@ -359,7 +388,10 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     console.error("Error creating assignment:", err);
     return NextResponse.json(
-      { error: "Failed to create assignment", details: err instanceof Error ? err.message : String(err) },
+      {
+        error: "Failed to create assignment",
+        details: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 }
     );
   }
