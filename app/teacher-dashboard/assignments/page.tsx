@@ -125,6 +125,3 @@ export default async function TeacherAssignmentsPage() {
   );
 }
 
-
-
-

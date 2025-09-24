@@ -1,4 +1,4 @@
-
+// app/api/teacher/assignments/[assignmentId]/Submissions/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
@@ -37,3 +37,5 @@ export async function PATCH(req: Request, { params }: { params: { assignmentId: 
     return NextResponse.json({ error: "Failed to update assignment" }, { status: 500 });
   }
 }
+
+

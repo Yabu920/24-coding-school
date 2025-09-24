@@ -194,6 +194,7 @@ model announcements {
   title      String
   message    String
   posted_by  String
+  
   created_at DateTime @default(now())
   postedBy   users    @relation("announcements_posted", fields: [posted_by], references: [id], onDelete: Cascade)
 }
@@ -212,9 +213,12 @@ model notifications {
   id        String   @id @default(cuid())
   user_id   String   // admin user who will see this notification
   type      String   // "new_user", "new_course", etc.
+  reciever_id String?  // optional, user who triggered the notification
+  sender_id   String?  // optional, user who triggered the notification
   message   String
   is_read   Boolean  @default(false)
   created_at DateTime @default(now())
+  link      String?  // optional link to related resource
 
   user      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }

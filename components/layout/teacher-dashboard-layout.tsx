@@ -20,13 +20,6 @@ export default function TeacherDashboardLayout({ children }: Props) {
   const notifRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
 
-  // if (!session) {
-  //   router.push("/login");
-  //   return null;
-  // }
-
-  // const profileName = session.user.full_name;
-  // const profileAvatar = session.user.image;
 
   // Fetch notifications
   useEffect(() => {

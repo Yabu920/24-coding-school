@@ -19,6 +19,7 @@ type NotificationDTO = {
   message: string;
   is_read: boolean;
   created_at: string;
+  type?: "assignment_submitted" | "new_assignment" | "new_grade" | string;
 };
 
 export default function TeacherDashboardHeader() {
@@ -186,33 +187,43 @@ export default function TeacherDashboardHeader() {
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-semibold">Notifications</h4>
                 </div>
+                
+
+
                 <div className="max-h-64 overflow-y-auto space-y-2">
-                  {notifications.length === 0 ? (
-                    <p className="text-sm text-gray-500">No notifications.</p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className={`p-2 rounded ${n.is_read ? "bg-gray-50" : "bg-blue-50"}`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="text-sm">{n.message}</div>
-                          {!n.is_read && (
-                            <button
-                              onClick={() => markNotificationRead(n.id)}
-                              className="text-xs text-blue-600 ml-2"
-                            >
-                              Mark read
-                            </button>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {new Date(n.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+  {notifications.length === 0 ? (
+    <p className="text-sm text-gray-500">No notifications.</p>
+  ) : (
+    notifications.map((n) => (
+      <div
+        key={n.id}
+        className={`p-2 rounded ${n.is_read ? "bg-gray-50" : "bg-blue-50"}`}
+      >
+        <div className="flex justify-between items-start">
+          <div className="text-sm flex items-center gap-1">
+            {/* 🔹 Show icon depending on type */}
+            {n.type === "assignment_submitted" && <span>📥</span>}
+            {n.type === "new_assignment" && <span>📘</span>}
+            {n.type === "new_grade" && <span>📝</span>}
+            <span>{n.message}</span>
+          </div>
+          {!n.is_read && (
+            <button
+              onClick={() => markNotificationRead(n.id)}
+              className="text-xs text-blue-600 ml-2"
+            >
+              Mark read
+            </button>
+          )}
+        </div>
+        <div className="text-xs text-gray-400 mt-1">
+          {new Date(n.created_at).toLocaleString()}
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
               </div>
             )}
           </div>
@@ -363,3 +374,36 @@ export default function TeacherDashboardHeader() {
     </>
   );
 }
+
+
+
+
+
+
+{/* <div className="max-h-64 overflow-y-auto space-y-2">
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-gray-500">No notifications.</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`p-2 rounded ${n.is_read ? "bg-gray-50" : "bg-blue-50"}`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="text-sm">{n.message}</div>
+                          {!n.is_read && (
+                            <button
+                              onClick={() => markNotificationRead(n.id)}
+                              className="text-xs text-blue-600 ml-2"
+                            >
+                              Mark read
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(n.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div> */}

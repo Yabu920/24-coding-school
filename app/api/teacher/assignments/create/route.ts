@@ -53,9 +53,32 @@ export async function POST(req: Request) {
       },
     });
 
+    // add notifications
+    // after assignment is created
+const enrolledStudents = await prisma.student_courses.findMany({
+  where: { course_id: courseId ?? undefined },
+  include: { student: { include: { user: true } } },
+});
+
+if (enrolledStudents.length > 0) {
+  await prisma.notifications.createMany({
+    data: enrolledStudents.map(sc => ({
+      user_id: sc.student.user_id,
+      type: "assignment",
+      message: `New assignment posted: ${title}`,
+      link: `/student/assignments/${created.id}`, // optional, for deep linking
+    })),
+  });
+}
+
+    
+
     return NextResponse.json({ success: true, assignment: created });
   } catch (err) {
     console.error("Create assignment error:", err);
     return NextResponse.json({ error: "Failed to create assignment" }, { status: 500 });
   }
 }
+
+
+

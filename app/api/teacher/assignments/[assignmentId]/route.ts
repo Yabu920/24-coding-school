@@ -1,5 +1,3 @@
-
-// app/api/teacher/assignments/[assignmentId]/route.ts
 // app/api/teacher/assignments/[assignmentId]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -70,4 +68,3 @@ export async function PUT(req: Request, { params }: { params: { assignmentId: st
     return NextResponse.json({ error: "Failed to update assignment" }, { status: 500 });
   }
 }
-

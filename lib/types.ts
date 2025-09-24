@@ -51,4 +51,5 @@ export type AssignmentDTO = {
   submissions?: Submission[];
   created_at?: string;
   due_date?: string | null;
+  status?: "new"|"unsubmitted" | "submitted";
 };
