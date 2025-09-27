@@ -6,6 +6,53 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { writeFile } from "fs/promises";
 import path from "path";
 
+export async function DELETE(
+  req: Request,
+  { params }: { params: { assignmentId: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "teacher")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const teacher = await prisma.teachers.findUnique({ where: { user_id: session.user.id } });
+  if (!teacher) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+
+  try {
+    const assignment = await prisma.assignments.findUnique({
+      where: { id: params.assignmentId },
+    });
+
+    if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+
+    if (assignment.teacher_id !== teacher.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // If files are stored under /public/uploads, remove the file (best-effort)
+    if (assignment.file_url && typeof assignment.file_url === "string" && assignment.file_url.startsWith("/uploads/")) {
+      const fileRelative = assignment.file_url.replace(/^\/+/, ""); // remove leading slash
+      const filePath = path.join(process.cwd(), "public", fileRelative);
+      try {
+        await import("fs/promises").then(async ({ unlink }) => {
+          await unlink(filePath);
+        });
+      } catch (e) {
+        // don't fail delete if file is missing — just log
+        console.warn("Failed to unlink assignment file:", e);
+      }
+    }
+
+    await prisma.assignments.delete({
+      where: { id: params.assignmentId },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Assignment delete error:", err);
+    return NextResponse.json({ error: "Failed to delete assignment" }, { status: 500 });
+  }
+}
+
 export async function PUT(req: Request, { params }: { params: { assignmentId: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "teacher")
@@ -62,9 +109,12 @@ export async function PUT(req: Request, { params }: { params: { assignmentId: st
       },
     });
 
+
+
     return NextResponse.json({ assignment: updated });
   } catch (err: any) {
     console.error("Assignment update error:", err);
     return NextResponse.json({ error: "Failed to update assignment" }, { status: 500 });
   }
 }
+

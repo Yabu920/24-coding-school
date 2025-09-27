@@ -1,4 +1,4 @@
-// app/teacher-dashboard/assignments/components/CreateAssignmentForm.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 
 type CourseOption = { id: string; name: string };
 
-export default function CreateAssignmentForm({ courses }: { courses: CourseOption[] }) {
+export default function CreateAssignmentForm({
+  courses,
+}: {
+  courses: CourseOption[];
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -42,14 +46,20 @@ export default function CreateAssignmentForm({ courses }: { courses: CourseOptio
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to create assignment");
 
-      // Success: clear form and refresh page data
+      // Reset form
       setTitle("");
       setDescription("");
       setDueDate("");
       setFile(null);
       setCourseId("");
       setMessage("Assignment created");
-      // refresh server-side data on this page
+
+      // ✅ Fire a custom event so TeacherAssignmentsClient can update instantly
+      window.dispatchEvent(
+        new CustomEvent("assignmentCreated", { detail: data.assignment })
+      );
+
+      // Optional: still refresh in background to sync with DB
       router.refresh();
     } catch (err: any) {
       setMessage(err.message || "Failed to create assignment");
@@ -62,36 +72,64 @@ export default function CreateAssignmentForm({ courses }: { courses: CourseOptio
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block font-medium">Title</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border p-2 rounded" />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border p-2 rounded"
+        />
       </div>
 
       <div>
         <label className="block font-medium">Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border p-2 rounded" />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full border p-2 rounded"
+        />
       </div>
 
       {courses.length > 0 && (
         <div>
           <label className="block font-medium">Course</label>
-          <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="w-full border p-2 rounded">
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            className="w-full border p-2 rounded"
+          >
             <option value="">-- Select course (optional) --</option>
-            {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
           </select>
         </div>
       )}
 
       <div>
         <label className="block font-medium">Due Date (optional)</label>
-        <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full border p-2 rounded" />
+        <input
+          type="datetime-local"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          className="w-full border p-2 rounded"
+        />
       </div>
 
       <div>
         <label className="block font-medium">File (optional)</label>
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        />
       </div>
 
       <div>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
           {loading ? "Creating..." : "Create Assignment"}
         </button>
       </div>
