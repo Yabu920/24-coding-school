@@ -21,6 +21,7 @@ type SubmissionIn = {
   student: { id: string; user: { full_name?: string; email?: string } };
   submitted_at?: string | null;
   submitted_file_url?: string | null;
+  description ?: string | null;
   grade?: string | null;
   feedback?: string | null;
 };
@@ -34,7 +35,13 @@ export default function TeacherAssignmentsClient({
 }) {
   // local state copies so UI updates without page refresh
   const [localAssignments, setLocalAssignments] = useState<AssignmentIn[]>(assignments ?? []);
-  const [localSubmissions, setLocalSubmissions] = useState<SubmissionIn[]>(submissions ?? []);
+  const [localSubmissions, setLocalSubmissions] = useState<LocalSubmission[]>(
+  submissions.map((s) => ({ ...s, showFull: false })) ?? []
+);
+// Extend SubmissionIn for local state to include `showFull` toggle
+type LocalSubmission = SubmissionIn & { showFull?: boolean };
+
+
 
   // filters
   const [filter, setFilter] = useState<"all" | "created" | "submitted">("all");
@@ -326,25 +333,68 @@ export default function TeacherAssignmentsClient({
               <div className="space-y-3">
                 {submissionsForSelected.map((sub) => (
                   <div key={sub.id} className="p-3 border rounded">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{sub.student?.user?.full_name ?? "Student"}</div>
-                        <div className="text-sm text-gray-500">Submitted: {sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : "—"}</div>
-                        {sub.submitted_file_url && (
-                          <div>
-                            <a href={sub.submitted_file_url} target="_blank" rel="noreferrer" className="text-blue-600 underline text-sm">View submitted file</a>
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm">Grade: {sub.grade ?? "-"}</div>
-                        <div className="text-sm">Feedback: {sub.feedback ?? "-"}</div>
-                        <div className="mt-2">
-                          <Link href={`/teacher-dashboard/assignments/submitted/${sub.id}`} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Open for grading</Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+  <div className="flex justify-between items-start">
+    <div className="min-w-0"> {/* ✅ allows text wrapping */}
+      <div className="font-medium">{sub.student?.user?.full_name ?? "Student"}</div>
+      <div className="text-sm text-gray-500">
+        Submitted: {sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : "—"}
+      </div>
+
+      {/* ✅ Student description wrapped */}
+      {sub.description && (
+  <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
+    {sub.description.length > 200 ? (
+      <>
+        {sub.showFull ? sub.description : sub.description.slice(0, 200) + "..."}
+        <button
+          onClick={() =>
+            setLocalSubmissions((prev) =>
+              prev.map((s) =>
+                s.id === sub.id ? { ...s, showFull: !s.showFull } : s
+              )
+            )
+          }
+          className="ml-2 text-blue-600 underline text-xs"
+        >
+          {sub.showFull ? "Show less" : "Show more"}
+        </button>
+      </>
+    ) : (
+      sub.description
+    )}
+  </div>
+)}
+
+
+      {sub.submitted_file_url && (
+        <div>
+          <a
+            href={sub.submitted_file_url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 underline text-sm"
+          >
+            View submitted file
+          </a>
+        </div>
+      )}
+    </div>
+
+    <div className="text-right flex-shrink-0">
+      <div className="text-sm">Grade: {sub.grade ?? "-"}</div>
+      <div className="text-sm">Feedback: {sub.feedback ?? "-"}</div>
+      <div className="mt-2">
+        <Link
+          href={`/teacher-dashboard/assignments/submitted/${sub.id}`}
+          className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+        >
+          Open for grading
+        </Link>
+      </div>
+    </div>
+  </div>
+</div>
+
                 ))}
               </div>
             )}
