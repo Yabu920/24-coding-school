@@ -109,12 +109,12 @@ model student_assignments {
   student_id         String
   submitted_file_url String?
   description        String?
+  teacher_id         String?
   grade              String?
   feedback           String?
   submitted_at       DateTime?
   assignment         assignments @relation(fields: [assignment_id], references: [id], name: "AssignmentToSubmission", onDelete: Cascade)
   student            students    @relation(fields: [student_id], references: [id], onDelete: Cascade)
-
   @@unique([assignment_id, student_id])
 }
 
