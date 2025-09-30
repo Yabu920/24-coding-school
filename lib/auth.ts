@@ -28,6 +28,7 @@ import { authOptions } from "./authOptions"
 export { authOptions }
 
 export async function getSession() {
-  return await getServerSession(authOptions) // ✅ no req/res needed
+  const session = await getServerSession(authOptions)
+  return session
 }
 
