@@ -153,24 +153,103 @@
 
 
 
+// // app/api/auth/[...nextauth]
+// import NextAuth, { AuthOptions } from "next-auth";
+// import CredentialsProvider from "next-auth/providers/credentials";
+// import { prisma } from "@/lib/prisma";
+// import { compare } from "bcryptjs";
+// import { Role, users } from "@prisma/client";
 
+// // Extend NextAuth session user type
+// declare module "next-auth" {
+//   interface Session {
+//     user: {
+//       id: string;
+//       name: string;
+//       email: string;
+//       role: Role;
+//     };
+//   }
+// }
+
+// export const authOptions: AuthOptions = {
+//   providers: [
+//     CredentialsProvider({
+//       name: "Credentials",
+//       credentials: {
+//         emailOrUsername: { label: "Email or Username", type: "text" },
+//         password: { label: "Password", type: "password" },
+//         role: { label: "Role", type: "text" },
+//       },
+//       async authorize(credentials): Promise<users | null> {
+//         if (!credentials) return null;
+
+//         const { emailOrUsername, password, role } = credentials;
+
+//         // Find user matching role and email/username
+//         const user: users | null = await prisma.users.findFirst({
+//           where: {
+//             role: role.toLowerCase() as Role,
+//             OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
+//           },
+//         });
+
+//         if (!user) return null;
+
+//         // Verify password
+//         const isValid = await compare(password, user.password_hash);
+//         if (!isValid) return null;
+
+//         // Return full Prisma user object
+//         return user;
+//       },
+//     }),
+//   ],
+
+//   session: {
+//     strategy: "jwt",
+//   },
+
+//   callbacks: {
+//     async jwt({ token, user }) {
+//       if (user) {
+//         token.id = user.id;
+//         token.name = user.full_name;
+//         token.email = user.email;
+//         token.role = user.role;
+//       }
+//       return token;
+//     },
+
+//     async session({ session, token }) {
+//       if (session.user) {
+//         session.user.id = token.id as string;
+//         session.user.name = token.name as string;
+//         session.user.email = token.email as string;
+//         session.user.role = token.role as Role;
+//       }
+//       return session;
+//     },
+//   },
+
+//   pages: {
+//     signIn: "/login",
+//   },
+
+//   secret: process.env.NEXTAUTH_SECRET,
+// };
+
+// const handler = NextAuth(authOptions);
+// export { handler as GET, handler as POST };
+
+
+
+// app/api/auth/[...nextauth]/route.ts
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
-import { Role, users } from "@prisma/client";
-
-// Extend NextAuth session user type
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: Role;
-    };
-  }
-}
+import { Role } from "@prisma/client";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -181,27 +260,41 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
         role: { label: "Role", type: "text" },
       },
-      async authorize(credentials): Promise<users | null> {
+
+      async authorize(credentials) {
         if (!credentials) return null;
 
         const { emailOrUsername, password, role } = credentials;
 
-        // Find user matching role and email/username
-        const user: users | null = await prisma.users.findFirst({
+        const wantedRole = (role ?? "").toLowerCase() as Role;
+
+        const userRecord = await prisma.users.findFirst({
           where: {
-            role: role.toLowerCase() as Role,
+            role: wantedRole,
             OR: [{ email: emailOrUsername }, { username: emailOrUsername }],
           },
         });
 
-        if (!user) return null;
+        if (!userRecord) return null;
 
-        // Verify password
-        const isValid = await compare(password, user.password_hash);
+        const isValid = await compare(password, userRecord.password_hash);
         if (!isValid) return null;
 
-        // Return full Prisma user object
-        return user;
+        const safeUser = {
+          id: userRecord.id,
+          role: userRecord.role,
+          name:
+            userRecord.full_name?.trim() ||
+            userRecord.username ||
+            userRecord.email ||
+            "User",
+          email: userRecord.email,
+          username: userRecord.username ?? "",
+          phone: userRecord.phone ?? "",
+          image: userRecord.profile_image_url ?? "",
+        };
+
+        return safeUser as any;
       },
     }),
   ],
@@ -213,10 +306,14 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.name = user.full_name;
-        token.email = user.email;
-        token.role = user.role;
+        const u: any = user;
+        token.id = u.id;
+        token.role = u.role;
+        token.name = u.name;
+        token.email = u.email;
+        token.username = u.username ?? "";
+        token.phone = u.phone ?? "";
+        token.image = u.image ?? "";
       }
       return token;
     },
@@ -224,9 +321,12 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.name = token.name as string;
-        session.user.email = token.email as string;
         session.user.role = token.role as Role;
+        session.user.full_name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.username = token.username as string; // guaranteed string
+        session.user.phone = token.phone as string; // guaranteed string
+        session.user.image = token.image as string; // guaranteed string
       }
       return session;
     },
