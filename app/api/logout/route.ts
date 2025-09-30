@@ -1,3 +1,4 @@
+// app/api/logout/route.ts
 import { NextResponse } from "next/server"
 import { clearSessionCookie } from "@/lib/auth"
 

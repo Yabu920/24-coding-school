@@ -24,6 +24,7 @@
 // lib/auth.ts
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "./authOptions"
+import { cookies } from "next/headers"
 
 export { authOptions }
 
@@ -32,3 +33,9 @@ export async function getSession() {
   return session
 }
 
+// ✅ Add this function
+export function clearSessionCookie() {
+  const cookieStore = cookies()
+  cookieStore.set("next-auth.session-token", "", { expires: new Date(0) })
+  cookieStore.set("__Secure-next-auth.session-token", "", { expires: new Date(0) })
+}
