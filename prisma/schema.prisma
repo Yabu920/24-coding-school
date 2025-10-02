@@ -1,80 +1,67 @@
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-enum UserStatus {
-  active
-  inactive
-  banned
-}
-
-enum Role {
-  admin
-  teacher
-  student
-}
-
 model users {
-  id                String          @id @default(cuid())
+  id                String            @id @default(cuid())
   role              Role
   full_name         String
-  email             String          @unique
-  username          String          @unique
+  email             String            @unique
+  username          String            @unique
   password_hash     String
   phone             String?
   profile_image_url String?
-  created_at        DateTime        @default(now())
-  updated_at        DateTime        @updatedAt
-  status            UserStatus?     @default(active)
-
-  announcements     announcements[] @relation("announcements_posted")
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  status            UserStatus?       @default(active)
+  announcements     announcements[]   @relation("announcements_posted")
   blog_posts        blog_posts[]
-  messages_received messages[]      @relation("messages_received")
-  messages_sent     messages[]      @relation("messages_sent")
-  notifications      notifications[]
+  messages_received messages[]        @relation("messages_received")
+  messages_sent     messages[]        @relation("messages_sent")
+  notifications     notifications[]
+  password_resets   password_resets[]
   student           students?
   teacher           teachers?
-  password_resets   password_resets[]
-  
 }
 
 model teachers {
-  id               String           @id @default(cuid())
-  user_id          String           @unique
+  id               String            @id @default(cuid())
+  user_id          String            @unique
   experience_years Int?
   subjects_taught  String?
   bio              String?
   assignments      assignments[]
   homework         homework[]
   live_classes     live_classes[]
-  user             users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   teacher_courses  teacher_courses[] @relation("TeacherToCourses")
+  user             users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model teacher_courses {
   id         String   @id @default(cuid())
   teacher_id String
   course_id  String
-  teacher    teachers @relation(fields: [teacher_id], references: [id], name: "TeacherToCourses", onDelete: Cascade)
-  course     courses  @relation(fields: [course_id], references: [id], name: "CourseToTeachers", onDelete: Cascade)
+  course     courses  @relation("CourseToTeachers", fields: [course_id], references: [id], onDelete: Cascade)
+  teacher    teachers @relation("TeacherToCourses", fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@unique([teacher_id, course_id])
+  @@index([course_id], map: "teacher_courses_course_id_fkey")
 }
 
 model student_courses {
   id         String   @id @default(cuid())
   student_id String
   course_id  String
-  student    students @relation(fields: [student_id], references: [id], name: "StudentToCourse", onDelete: Cascade)
   course     courses  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  student    students @relation("StudentToCourse", fields: [student_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, course_id])
+  @@index([course_id], map: "student_courses_course_id_fkey")
 }
 
 model students {
@@ -85,8 +72,8 @@ model students {
   progress_score      Int                   @default(0)
   certificates        certificates[]
   student_assignments student_assignments[]
+  student_courses     student_courses[]     @relation("StudentToCourse")
   user                users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  student_courses     student_courses[]     @relation("StudentToCourse") // fix
 }
 
 model assignments {
@@ -98,9 +85,12 @@ model assignments {
   course_id   String?
   created_at  DateTime              @default(now())
   due_date    DateTime?
-  teacher     teachers              @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   course      courses?              @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  submissions student_assignments[] @relation("AssignmentToSubmission") // fix
+  teacher     teachers              @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  submissions student_assignments[] @relation("AssignmentToSubmission")
+
+  @@index([course_id], map: "assignments_course_id_fkey")
+  @@index([teacher_id], map: "assignments_teacher_id_fkey")
 }
 
 model student_assignments {
@@ -113,23 +103,23 @@ model student_assignments {
   grade              String?
   feedback           String?
   submitted_at       DateTime?
-  assignment         assignments @relation(fields: [assignment_id], references: [id], name: "AssignmentToSubmission", onDelete: Cascade)
+  assignment         assignments @relation("AssignmentToSubmission", fields: [assignment_id], references: [id], onDelete: Cascade)
   student            students    @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
   @@unique([assignment_id, student_id])
+  @@index([student_id], map: "student_assignments_student_id_fkey")
 }
 
 model courses {
-  id              String           @id @default(cuid())
+  id              String            @id @default(cuid())
   name            String
   description     String?
-  created_at      DateTime         @default(now())
-  teacher_courses teacher_courses[] @relation("CourseToTeachers")
-  student_courses student_courses[]
-  live_classes    live_classes[]
-
-  //new
+  created_at      DateTime          @default(now())
   assignments     assignments[]
   certificates    certificates[]
+  live_classes    live_classes[]
+  student_courses student_courses[]
+  teacher_courses teacher_courses[] @relation("CourseToTeachers")
 }
 
 model homework {
@@ -140,6 +130,8 @@ model homework {
   teacher_id String
   created_at DateTime @default(now())
   teacher    teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([teacher_id], map: "homework_teacher_id_fkey")
 }
 
 model live_classes {
@@ -151,8 +143,11 @@ model live_classes {
   video_url   String?
   teacher_id  String
   course_id   String
-  teacher     teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   course      courses   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  teacher     teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([course_id], map: "live_classes_course_id_fkey")
+  @@index([teacher_id], map: "live_classes_teacher_id_fkey")
 }
 
 model certificates {
@@ -162,8 +157,11 @@ model certificates {
   course_name String
   issued_date DateTime @default(now())
   file_url    String?
-  student     students @relation(fields: [student_id], references: [id], onDelete: Cascade)
   course      courses? @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  student     students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([course_id], map: "certificates_course_id_fkey")
+  @@index([student_id], map: "certificates_student_id_fkey")
 }
 
 model blog_posts {
@@ -176,6 +174,8 @@ model blog_posts {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
   author          users    @relation(fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@index([author_id], map: "blog_posts_author_id_fkey")
 }
 
 model messages {
@@ -187,6 +187,9 @@ model messages {
   read_status Boolean  @default(false)
   receiver    users    @relation("messages_received", fields: [receiver_id], references: [id], onDelete: Cascade)
   sender      users    @relation("messages_sent", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([receiver_id], map: "messages_receiver_id_fkey")
+  @@index([sender_id], map: "messages_sender_id_fkey")
 }
 
 model announcements {
@@ -194,33 +197,35 @@ model announcements {
   title      String
   message    String
   posted_by  String
-  
   created_at DateTime @default(now())
   postedBy   users    @relation("announcements_posted", fields: [posted_by], references: [id], onDelete: Cascade)
-}
-model settings {
-  id                String   @id @default(cuid())
-  theme             String   @default("light") // "light" or "dark"
-  primary_color     String?  // optional
-  maintenance_mode  Boolean  @default(false)
-  auto_backup       String?  // e.g., "daily", "weekly", "monthly"
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+
+  @@index([posted_by], map: "announcements_posted_by_fkey")
 }
 
+model settings {
+  id               String   @id @default(cuid())
+  theme            String   @default("light")
+  primary_color    String?
+  maintenance_mode Boolean  @default(false)
+  auto_backup      String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
 
 model notifications {
-  id        String   @id @default(cuid())
-  user_id   String   // admin user who will see this notification
-  type      String   // "new_user", "new_course", etc.
-  reciever_id String?  // optional, user who triggered the notification
-  sender_id   String?  // optional, user who triggered the notification
-  message   String
-  is_read   Boolean  @default(false)
-  created_at DateTime @default(now())
-  link      String?  // optional link to related resource
+  id          String   @id @default(cuid())
+  user_id     String
+  type        String
+  reciever_id String?
+  sender_id   String?
+  message     String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+  link        String?
+  user        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  @@index([user_id], map: "notifications_user_id_fkey")
 }
 
 model password_resets {
@@ -229,6 +234,19 @@ model password_resets {
   token      String   @unique
   expires_at DateTime
   created_at DateTime @default(now())
-
   user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "password_resets_user_id_fkey")
+}
+
+enum UserStatus {
+  active
+  inactive
+  banned
+}
+
+enum Role {
+  admin
+  teacher
+  student
 }
