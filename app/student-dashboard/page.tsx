@@ -9,7 +9,7 @@ export default async function StudentDashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "student") {
-    return redirect("/login");
+    return redirect("/");
   }
 
   return <StudentDashboardClient />;

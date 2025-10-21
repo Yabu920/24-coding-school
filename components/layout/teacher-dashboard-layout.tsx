@@ -75,7 +75,7 @@ export default function TeacherDashboardLayout({ children }: Props) {
   async function handleLogout() {
     setShowProfileMenu(false);
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    router.replace("/login");
+    router.replace("/");
   }
 
   return (

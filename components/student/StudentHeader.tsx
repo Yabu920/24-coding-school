@@ -84,7 +84,7 @@ export default function StudentHeader({ onToggleSidebar }: { onToggleSidebar?: (
             <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow z-50 overflow-hidden">
               <Link href="/student-dashboard/profile"><a className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</a></Link>
               <Link href="/student-dashboard/settings"><a className="block px-4 py-2 text-sm hover:bg-gray-100">Settings</a></Link>
-              <button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Logout</button>
+              <button onClick={() => signOut({ callbackUrl: "/" })} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Logout</button>
             </div>
           )}
         </div>

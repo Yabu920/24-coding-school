@@ -5,10 +5,10 @@ import { prisma } from "@/lib/prisma"
 
 export default async function CoursesPage() {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== "teacher") redirect("/login")
+  if (!session || session.user.role !== "teacher") redirect("/")
 
   const teacher = await prisma.teachers.findUnique({ where: { user_id: session.user.id } })
-  if (!teacher) redirect("/login")
+  if (!teacher) redirect("/")
 
   const tcs = await prisma.teacher_courses.findMany({
     where: { teacher_id: teacher.id },

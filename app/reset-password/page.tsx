@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
 
     const data = await res.json();
     alert(data.message || data.error);
-    if (data.message) window.location.href = "/login";
+    if (data.message) window.location.href = "/";
   };
 
   return (

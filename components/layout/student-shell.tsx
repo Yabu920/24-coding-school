@@ -83,7 +83,7 @@ export default function StudentShell({ children, user }: { children: ReactNode; 
               <div className="absolute right-0 mt-2 w-44 bg-white border rounded shadow-sm p-2 z-50">
                 <button className="text-left w-full p-2 hover:bg-gray-50 rounded" onClick={() => router.push("/student-dashboard/profile")}>Profile</button>
                 <button className="text-left w-full p-2 hover:bg-gray-50 rounded" onClick={() => router.push("/student-dashboard/profile")}>Settings</button>
-                <button className="text-left w-full p-2 hover:bg-gray-50 rounded" onClick={() => signOut({ callbackUrl: "/login" })}>Logout</button>
+                <button className="text-left w-full p-2 hover:bg-gray-50 rounded" onClick={() => signOut({ callbackUrl: "/" })}>Logout</button>
               </div>
             </div>
           </div>

@@ -70,7 +70,10 @@ export default function TeacherDashboardHeader() {
           setNotifications(j.notifications ?? []);
         } else {
           // 404 is ok if no notifications route exists yet
-          console.warn("Failed to fetch teacher notifications", await nRes.text());
+          console.warn(
+            "Failed to fetch teacher notifications",
+            await nRes.text()
+          );
         }
       } catch (err) {
         console.error("Header load error:", err);
@@ -85,9 +88,13 @@ export default function TeacherDashboardHeader() {
 
   async function markNotificationRead(id: string) {
     try {
-      const res = await fetch(`/api/teacher/notifications/${id}`, { method: "PATCH" });
+      const res = await fetch(`/api/teacher/notifications/${id}`, {
+        method: "PATCH",
+      });
       if (res.ok) {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+        );
       }
     } catch (err) {
       console.error("mark read error", err);
@@ -157,7 +164,8 @@ export default function TeacherDashboardHeader() {
     }
   }
 
-  if (loadingProfile) return <header className="p-4 bg-white shadow">Loading...</header>;
+  if (loadingProfile)
+    return <header className="p-4 bg-white shadow">Loading...</header>;
 
   return (
     <>
@@ -187,43 +195,44 @@ export default function TeacherDashboardHeader() {
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-semibold">Notifications</h4>
                 </div>
-                
-
 
                 <div className="max-h-64 overflow-y-auto space-y-2">
-  {notifications.length === 0 ? (
-    <p className="text-sm text-gray-500">No notifications.</p>
-  ) : (
-    notifications.map((n) => (
-      <div
-        key={n.id}
-        className={`p-2 rounded ${n.is_read ? "bg-gray-50" : "bg-blue-50"}`}
-      >
-        <div className="flex justify-between items-start">
-          <div className="text-sm flex items-center gap-1">
-            {/* 🔹 Show icon depending on type */}
-            {n.type === "assignment_submitted" && <span>📥</span>}
-            {n.type === "new_assignment" && <span>📘</span>}
-            {n.type === "new_grade" && <span>📝</span>}
-            <span>{n.message}</span>
-          </div>
-          {!n.is_read && (
-            <button
-              onClick={() => markNotificationRead(n.id)}
-              className="text-xs text-blue-600 ml-2"
-            >
-              Mark read
-            </button>
-          )}
-        </div>
-        <div className="text-xs text-gray-400 mt-1">
-          {new Date(n.created_at).toLocaleString()}
-        </div>
-      </div>
-    ))
-  )}
-</div>
-
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-gray-500">No notifications.</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`p-2 rounded ${
+                          n.is_read ? "bg-gray-50" : "bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="text-sm flex items-center gap-1">
+                            {/* 🔹 Show icon depending on type */}
+                            {n.type === "assignment_submitted" && (
+                              <span>📥</span>
+                            )}
+                            {n.type === "new_assignment" && <span>📘</span>}
+                            {n.type === "new_grade" && <span>📝</span>}
+                            <span>{n.message}</span>
+                          </div>
+                          {!n.is_read && (
+                            <button
+                              onClick={() => markNotificationRead(n.id)}
+                              className="text-xs text-blue-600 ml-2"
+                            >
+                              Mark read
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(n.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -235,11 +244,13 @@ export default function TeacherDashboardHeader() {
               className="flex items-center gap-2 rounded p-1 hover:bg-gray-100"
             >
               <img
-                src={teacher?.profile_image_url || "/default-avatar.png"}
+                src={teacher?.profile_image_url || "/admin.png"}
                 alt="avatar"
                 className="w-8 h-8 rounded-full object-cover"
               />
-              <span className="hidden md:inline">{teacher?.full_name ?? teacher?.email}</span>
+              <span className="hidden md:inline">
+                {teacher?.full_name ?? teacher?.email}
+              </span>
               <ChevronDown className="w-4 h-4" />
             </button>
 
@@ -260,7 +271,7 @@ export default function TeacherDashboardHeader() {
                 </button>
 
                 <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => signOut({ callbackUrl: "/" })}
                   className="w-full text-left p-2 hover:bg-gray-100 flex items-center gap-2 text-red-600"
                 >
                   <LogOut className="w-4 h-4" /> Logout
@@ -279,7 +290,9 @@ export default function TeacherDashboardHeader() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Profile image</label>
+                <label className="block text-sm font-medium mb-1">
+                  Profile image
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -295,19 +308,25 @@ export default function TeacherDashboardHeader() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Full name</label>
+                <label className="block text-sm font-medium mb-1">
+                  Full name
+                </label>
                 <input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full border rounded p-2"
                 />
-                <label className="block text-sm font-medium mb-1 mt-2">Username</label>
+                <label className="block text-sm font-medium mb-1 mt-2">
+                  Username
+                </label>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full border rounded p-2"
                 />
-                <label className="block text-sm font-medium mb-1 mt-2">Phone</label>
+                <label className="block text-sm font-medium mb-1 mt-2">
+                  Phone
+                </label>
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -375,12 +394,8 @@ export default function TeacherDashboardHeader() {
   );
 }
 
-
-
-
-
-
-{/* <div className="max-h-64 overflow-y-auto space-y-2">
+{
+  /* <div className="max-h-64 overflow-y-auto space-y-2">
                   {notifications.length === 0 ? (
                     <p className="text-sm text-gray-500">No notifications.</p>
                   ) : (
@@ -406,4 +421,5 @@ export default function TeacherDashboardHeader() {
                       </div>
                     ))
                   )}
-                </div> */}
+                </div> */
+}

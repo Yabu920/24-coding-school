@@ -7,7 +7,7 @@ import ClassesManager from "./components/ClassesManager";
 
 export default async function ClassesPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "teacher") return redirect("/login");
+  if (!session || session.user.role !== "teacher") return redirect("/");
 
   // find teacher record
   const teacher = await prisma.teachers.findUnique({ where: { user_id: session.user.id } });

@@ -10,7 +10,7 @@ export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "admin") {
-    redirect("/login");
+    redirect("/");
   }
 
   const totalStudents = await prisma.users.count({ where: { role: "student" } });
